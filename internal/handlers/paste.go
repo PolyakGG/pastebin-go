@@ -16,7 +16,7 @@ func NewPasteHandler(service *service.PasteService) *PasteHandler {
 }
 func (h *PasteHandler) CreatePaste(c *gin.Context) {
 	var input struct {
-		Title   string `json:"title" binding:"required"'`
+		Title   string `json:"title" binding:"required"`
 		Content string `json:"content" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
