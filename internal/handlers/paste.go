@@ -45,3 +45,15 @@ func (h *PasteHandler) GetPaste(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, paste)
 }
+
+// Метод для обрабатывания HTTP-запроса GET
+
+// GetAllPastes retrieves all pastes
+func (h *PasteHandler) GetAllPastes(c *gin.Context) {
+	pastes, err := h.service.GetAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to retrieve pastes"})
+		return
+	}
+	c.JSON(http.StatusOK, pastes)
+}
