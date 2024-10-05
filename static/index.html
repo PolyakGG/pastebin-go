@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pastebin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            display: flex;
+            background: linear-gradient(#eabe18, #c13f3f);
+        }
+        .sidebar {
+            width: 25%;
+            padding-right: 20px;
+        }
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .sidebar li {
+            margin-bottom: 10px;
+        }
+        .sidebar a {
+            text-decoration: none;
+            color: blue;
+            cursor: pointer;
+        }
+        .content {
+            width: 75%;
+        }
+        textarea {
+            background: white;
+            width: 20%;
+            height: 88px;
+            resize: none;
+        }
+        .paste-content {
+            padding: 20px;
+            margin-top: 20px;
+            min-height: calc(100vh - 334px);
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <h2>Past Pastes</h2>
+    <ul id="pastes-list">
+        <!-- List of pastes will be populated here -->
+    </ul>
+</div>
+<div class="content">
+    <h1>Pastebin</h1>
+    <form id="paste-form">
+        <div>
+            <label for="title">Title:</label><br>
+            <input type="text" id="title" name="title" required maxlength="30" oninput="validateTitle()">
+            <div id="charCount"></div>
+        </div>
+        <div>
+            <label for="content">Content:</label><br>
+            <textarea id="content" name="content" required></textarea><br><br>
+        </div>
+        <button type="submit">Submit</button>
+    </form>
+    <div id="selected-paste" class="paste-content">
+        <!-- Selected paste content will be displayed here -->
+    </div>
+</div>
+<script src="script.js"></script>
+<script>
+    const form = document.getElementById('paste-form');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const title = document.getElementById('title').value;
+        const content = document.getElementById('content').value;
+
+        const response = await fetch('/pastes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ title, content })
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            alert('Paste created with ID: ' + result.id);
+            form.reset();
+            fetchPastes();  // Refresh the list of pastes after submitting
+        } else {
+            alert('Error: ' + result.error);
+        }
+    });
+
+    // Fetch and display pastes
+    async function fetchPastes() {
+        const response = await fetch('/pastes');
+        const pastes = await response.json();
+
+        const pastesList = document.getElementById('pastes-list');
+        pastesList.innerHTML = '';
+        pastes.forEach(paste => {
+            const listItem = document.createElement('li');
+            const link = document.createElement('a');
+            link.textContent = paste.title;
+            link.addEventListener('click', () => loadPaste(paste.id));
+            listItem.appendChild(link);
+            pastesList.appendChild(listItem);
+        });
+    }
+
+    // Load and display a specific paste
+    async function loadPaste(id) {
+        const response = await fetch(`/pastes/${id}`);
+        const paste = await response.json();
+
+        const selectedPasteDiv = document.getElementById('selected-paste');
+        selectedPasteDiv.innerHTML = `<h2>${paste.title}</h2><p>${paste.content}</p>`;
+    }
+
+    // Load pastes on page load
+    window.onload = fetchPastes;
+
+    // Validate title input and play sound when 0 characters remaining
+    function validateTitle() {
+        const maxLength = 30;
+        const titleInput = document.getElementById('title');
+        const charCountDiv = document.getElementById('charCount');
+
+        const remainingChars = maxLength - titleInput.value.length;
+        charCountDiv.textContent = "Осталось символов: " + remainingChars;
+    }
+</script>
+</body>
+</html>
