@@ -21,9 +21,16 @@ func main() {
 	svc := service.NewPasteService(repo)
 	pasteHandler := handlers.NewPasteHandler(svc)
 	router := gin.Default()
-
+	// Раздача статических файлов
+	router.Static("/static", "./static")
+	// Маршрут для основной страницы.
+	router.GET("/", func(c *gin.Context) {
+		c.File("./static/index.html")
+	})
+	// API для создания и получения pastes
 	router.POST("/pastes", pasteHandler.CreatePaste)
 	router.GET("pastes/:id", pasteHandler.GetPaste)
+	router.GET("/pastes", pasteHandler.GetAllPastes)
 
 	port := os.Getenv("PORT")
 	if port == "" {
