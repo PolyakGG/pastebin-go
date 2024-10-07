@@ -32,7 +32,7 @@
         }
         textarea {
             background: white;
-            width: 20%;
+            width: 15%; /* Изменено на 100%, чтобы занимало всю ширину */
             height: 88px;
             resize: none;
         }
@@ -42,34 +42,42 @@
             min-height: calc(100vh - 334px);
             box-sizing: border-box;
         }
+        .error {
+            color: red;
+            display: none;
+        }
     </style>
 </head>
 <body>
 <div class="sidebar">
     <h2>Past Pastes</h2>
     <ul id="pastes-list">
-        <!-- List of pastes will be populated here -->
+        <!-- Список pastes будет загружен сюда -->
     </ul>
 </div>
+
 <div class="content">
     <h1>Pastebin</h1>
     <form id="paste-form">
         <div>
             <label for="title">Title:</label><br>
             <input type="text" id="title" name="title" required maxlength="30" oninput="validateTitle()">
-            <div id="charCount"></div>
+            <div id="error-message" class="error">Limit reached! Please shorten your title.</div>
+            <div id="remaining-chars">30 characters remaining</div> <!-- Элемент для отображения оставшихся символов -->
         </div>
+
         <div>
             <label for="content">Content:</label><br>
             <textarea id="content" name="content" required></textarea><br><br>
         </div>
         <button type="submit">Submit</button>
     </form>
+
     <div id="selected-paste" class="paste-content">
-        <!-- Selected paste content will be displayed here -->
+        <!-- Контент выбранного pastes -->
     </div>
 </div>
-<script src="script.js"></script>
+
 <script>
     const form = document.getElementById('paste-form');
     form.addEventListener('submit', async (e) => {
@@ -90,13 +98,13 @@
         if (response.ok) {
             alert('Paste created with ID: ' + result.id);
             form.reset();
-            fetchPastes();  // Refresh the list of pastes after submitting
+            await fetchPastes();  // Обновляем список pastes после создания
         } else {
             alert('Error: ' + result.error);
         }
     });
 
-    // Fetch and display pastes
+    // Загрузка списка pastes
     async function fetchPastes() {
         const response = await fetch('/pastes');
         const pastes = await response.json();
@@ -107,33 +115,33 @@
             const listItem = document.createElement('li');
             const link = document.createElement('a');
             link.textContent = paste.title;
-            link.addEventListener('click', () => loadPaste(paste.id));
+            link.href = `/pastes/${paste.id}`;  // Ссылка на страницу с конкретным paste
             listItem.appendChild(link);
             pastesList.appendChild(listItem);
         });
     }
 
-    // Load and display a specific paste
-    async function loadPaste(id) {
-        const response = await fetch(`/pastes/${id}`);
-        const paste = await response.json();
-
-        const selectedPasteDiv = document.getElementById('selected-paste');
-        selectedPasteDiv.innerHTML = `<h2>${paste.title}</h2><p>${paste.content}</p>`;
-    }
-
-    // Load pastes on page load
-    window.onload = fetchPastes;
-
-    // Validate title input and play sound when 0 characters remaining
+    // Валидация заголовка и отображение оставшихся символов
     function validateTitle() {
-        const maxLength = 30;
         const titleInput = document.getElementById('title');
-        const charCountDiv = document.getElementById('charCount');
+        const errorMessage = document.getElementById('error-message');
+        const remainingChars = document.getElementById('remaining-chars');
 
-        const remainingChars = maxLength - titleInput.value.length;
-        charCountDiv.textContent = "Осталось символов: " + remainingChars;
+        const maxChars = 30;
+        const currentLength = titleInput.value.length;
+
+        if (currentLength > maxChars) {
+            errorMessage.style.display = 'block';
+            titleInput.value = titleInput.value.substring(0, maxChars); // Ограничиваем количество символов
+        } else {
+            errorMessage.style.display = 'none';
+        }
+
+        remainingChars.textContent = (maxChars - currentLength) + " characters remaining"; // Обновляем количество оставшихся символов
     }
+
+    // Загружаем список pastes при загрузке страницы
+    window.onload = fetchPastes;
 </script>
 </body>
 </html>

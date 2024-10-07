@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"pastebin-go/internal/models"
 	"pastebin-go/internal/repository"
 )
@@ -33,4 +34,13 @@ func (s *PasteService) GetPaste(id int) (*models.Paste, error) {
 
 func (s *PasteService) GetAll() ([]models.Paste, error) {
 	return s.Repo.GetAll()
+}
+
+// Метод для получения пасты по ID
+func (s *PasteService) GetPasteByID(id string) (*models.Paste, error) {
+	paste, err := s.Repo.FindByID(id)
+	if err != nil {
+		return nil, errors.New("paste not found")
+	}
+	return &paste, nil
 }

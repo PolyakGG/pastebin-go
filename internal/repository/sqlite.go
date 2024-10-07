@@ -26,7 +26,12 @@ func (r *PasteRepository) Create(paste *models.Paste) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer stmt.Close()
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(stmt)
 
 	res, err := stmt.Exec(paste.Title, paste.Content)
 	if err != nil {
@@ -56,7 +61,12 @@ func (r *PasteRepository) GetAll() ([]models.Paste, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(rows)
 
 	var pastes []models.Paste
 	for rows.Next() {
@@ -68,4 +78,20 @@ func (r *PasteRepository) GetAll() ([]models.Paste, error) {
 	}
 
 	return pastes, nil
+}
+
+// Метод для поиска пасты по ID
+func (r *PasteRepository) FindByID(id string) (models.Paste, error) {
+	row := r.DB.QueryRow("SELECT id, title, content FROM pastes WHERE id = ?", id)
+
+	var paste models.Paste
+	err := row.Scan(&paste.ID, &paste.Title, &paste.Content)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return models.Paste{}, errors.New("paste not found")
+		}
+		return models.Paste{}, err
+	}
+
+	return paste, nil
 }

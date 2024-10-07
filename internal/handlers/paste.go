@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"pastebin-go/internal/service"
-	"strconv"
 )
 
 type PasteHandler struct {
@@ -14,6 +13,7 @@ type PasteHandler struct {
 func NewPasteHandler(service *service.PasteService) *PasteHandler {
 	return &PasteHandler{service: service}
 }
+
 func (h *PasteHandler) CreatePaste(c *gin.Context) {
 	var input struct {
 		Title   string `json:"title" binding:"required"`
@@ -31,21 +31,6 @@ func (h *PasteHandler) CreatePaste(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"id": id})
 }
 
-func (h *PasteHandler) GetPaste(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
-		return
-	}
-	paste, err := h.service.GetPaste(id)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Paste not found"})
-		return
-	}
-	c.JSON(http.StatusOK, paste)
-}
-
 // Метод для обрабатывания HTTP-запроса GET
 
 // GetAllPastes retrieves all pastes
@@ -56,4 +41,17 @@ func (h *PasteHandler) GetAllPastes(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, pastes)
+}
+func (h *PasteHandler) GetPastePage(c *gin.Context) {
+	id := c.Param("id")
+	paste, err := h.service.GetPasteByID(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Paste not found"})
+		return
+	}
+
+	c.HTML(http.StatusOK, "paste.html", gin.H{
+		"title":   paste.Title,
+		"content": paste.Content,
+	})
 }
